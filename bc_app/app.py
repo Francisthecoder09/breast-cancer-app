@@ -98,16 +98,19 @@ def results_tab(b):
     st.subheader("Model comparison")
     st.dataframe(b["comparison"].style.format(
         {c: "{:.3f}" for c in b["comparison"].columns if b["comparison"][c].dtype == float}),
-        use_container_width=True)
+        width="stretch")
 
 
 st.title("🩺 Breast Cancer Diagnosis: Feature Selection + SVM")
 st.warning("Educational project only. Not a medical device and not for clinical use.")
 
+if not (MODEL_DIR / "wisconsin.joblib").exists() or not (MODEL_DIR / "coimbra.joblib").exists():
+    with st.spinner("First run: downloading data and training models (about a minute)..."):
+        import train_models
+        train_models.main()
+    st.cache_resource.clear()
+
 wis, coi = load("wisconsin"), load("coimbra")
-if wis is None or coi is None:
-    st.error("Model files not found. Run `python train_models.py` first.")
-    st.stop()
 
 t1, t2, t3, t4 = st.tabs(["Wisconsin: predict", "Coimbra: predict", "Wisconsin: results", "Coimbra: results"])
 with t1:
