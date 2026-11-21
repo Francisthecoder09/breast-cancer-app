@@ -10,44 +10,78 @@ import streamlit as st
 from sklearn.metrics import ConfusionMatrixDisplay, PrecisionRecallDisplay, RocCurveDisplay
 
 MODEL_DIR = Path(__file__).parent / "models"
-st.set_page_config(page_title="BreastDx SVM", page_icon="🩺", layout="wide")
+st.set_page_config(page_title="Breast Cancer SVM Explorer", layout="wide")
 
 st.markdown("""
 <style>
-.block-container {padding-top: 2rem; max-width: 1200px;}
-.hero {background: linear-gradient(135deg,#be185d 0%,#7c3aed 100%); border-radius: 22px;
-       padding: 3rem 2.6rem; color: #fff; margin-bottom: 1.5rem;}
-.hero-title {font-size: 2.7rem; font-weight: 800; line-height: 1.15; margin: 0 0 .8rem 0;}
-.hero-sub {font-size: 1.15rem; max-width: 720px; opacity: .95; margin: 0;}
-.badge {display:inline-block; background: rgba(255,255,255,.2); border-radius: 99px;
-        padding: .25rem .9rem; font-size: .85rem; margin-bottom: 1rem;}
-.card {border: 1px solid rgba(128,128,128,.3); background: rgba(128,128,128,.08);
-       border-radius: 16px; padding: 1.2rem 1.3rem; min-height: 150px;}
-.card h4 {margin: 0 0 .4rem 0; font-size: 1.05rem;}
-.card p {margin: 0; opacity: .85; font-size: .95rem; line-height: 1.45;}
-.card .icon {font-size: 1.8rem; margin-bottom: .4rem;}
-.stat {border: 1px solid rgba(128,128,128,.3); background: rgba(128,128,128,.08);
-       border-radius: 16px; padding: 1.1rem; text-align: center;}
-.stat .v {font-size: 2rem; font-weight: 800; color: #db2777;}
-.stat .l {font-size: .85rem; opacity: .8;}
-.step {border-left: 4px solid #db2777; background: rgba(128,128,128,.08);
-       border-radius: 10px; padding: .8rem 1rem; margin-bottom: .6rem;}
-.step b {color: #db2777;}
-.result {border-radius: 18px; padding: 1.6rem 1.8rem; color: #fff; margin: 1rem 0;}
-.result.pos {background: linear-gradient(135deg,#b91c1c,#ef4444);}
-.result.neg {background: linear-gradient(135deg,#047857,#10b981);}
-.result .small {opacity: .9; font-size: .9rem;}
-.result .big {font-size: 2.1rem; font-weight: 800; margin: .2rem 0;}
-.gauge {position: relative; height: 14px; border-radius: 99px; margin: 1.6rem 0 .4rem 0;
-        background: linear-gradient(90deg,#10b981,#e5e7eb 50%,#ef4444);}
-.marker {position: absolute; top: -6px; width: 8px; height: 26px; background: #111;
+[data-testid="stAppViewContainer"] {background: var(--background-color); color: var(--text-color);}
+.block-container {padding-top: 2rem; padding-bottom: 3rem; max-width: 1220px;}
+[data-testid="stSidebar"] {border-right: 1px solid rgba(128,128,128,.22);}
+[data-testid="stSidebar"] h2 {letter-spacing: -.03em;}
+h1, h2, h3 {letter-spacing: -.025em;}
+.hero {background: linear-gradient(120deg,#12313b 0%,#145b66 100%); border-radius: 20px;
+       padding: 2.7rem 2.6rem; color: #fff; margin-bottom: 1.35rem;
+       box-shadow: 0 14px 35px rgba(15,45,55,.14);}
+.eyebrow {font-size: .78rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+          opacity: .86; margin-bottom: .9rem;}
+.hero-title {font-size: clamp(2rem,4vw,3rem); font-weight: 750; line-height: 1.12;
+             max-width: 850px; margin: 0 0 .85rem 0;}
+.hero-sub {font-size: 1.08rem; line-height: 1.6; max-width: 760px; opacity: .92; margin: 0;}
+.card {height: 100%; border: 1px solid rgba(128,128,128,.25);
+       background: var(--secondary-background-color); color: var(--text-color);
+       border-radius: 14px; padding: 1.2rem 1.25rem; min-height: 142px;
+       box-shadow: 0 4px 14px rgba(15,23,42,.035);}
+.card-mark {height: 3px; width: 36px; border-radius: 5px; background: #0f766e; margin-bottom: .85rem;}
+.card h3 {margin: 0 0 .45rem 0; font-size: 1.04rem; font-weight: 700;}
+.card p {margin: 0; color: var(--text-color); opacity: .82; font-size: .95rem; line-height: 1.55;}
+.stat {height: 100%; border: 1px solid rgba(128,128,128,.25);
+       background: var(--secondary-background-color); color: var(--text-color);
+       border-radius: 14px; padding: 1rem .8rem; text-align: center;
+       box-shadow: 0 4px 14px rgba(15,23,42,.035);}
+.stat .v {font-size: clamp(1.45rem,2.8vw,2rem); font-weight: 750; color: #0f766e;
+          font-variant-numeric: tabular-nums;}
+.stat .l {font-size: .88rem; line-height: 1.4; opacity: .82;}
+.step {border-left: 3px solid #0f766e; background: var(--secondary-background-color);
+       border-radius: 0 10px 10px 0; padding: .9rem 1rem; margin-bottom: .65rem;
+       line-height: 1.55;}
+.step b {color: #0f766e;}
+.result {border-radius: 16px; padding: 1.45rem 1.6rem; color: #fff; margin: 1rem 0;
+         box-shadow: 0 10px 24px rgba(15,23,42,.12);}
+.result.pos {background: linear-gradient(120deg,#7f1d1d,#b91c1c);}
+.result.neg {background: linear-gradient(120deg,#115e59,#0f766e);}
+.result .small {opacity: .92; font-size: .92rem; line-height: 1.5;}
+.result .big {font-size: 2rem; font-weight: 750; margin: .22rem 0;}
+.gauge {position: relative; height: 12px; border-radius: 99px; margin: 1.45rem 0 .45rem;
+        background: linear-gradient(90deg,#67a99d,#e5e7eb 50%,#cf7777);}
+.marker {position: absolute; top: -6px; width: 8px; height: 24px; background: #0f172a;
          border: 2px solid #fff; border-radius: 5px; transform: translateX(-50%);}
-.gauge-labels {display: flex; justify-content: space-between; font-size: .8rem; opacity: .8;}
-.footer {text-align: center; opacity: .6; font-size: .85rem; margin-top: 2.5rem;}
+.gauge-labels {display: flex; justify-content: space-between; gap: .5rem;
+               font-size: .82rem; opacity: .9;}
+.footer {text-align: center; opacity: .68; font-size: .88rem; margin-top: 2.5rem;
+         padding-top: 1rem; border-top: 1px solid rgba(128,128,128,.2);}
+.stButton > button {border-radius: 10px; min-height: 2.7rem; font-weight: 600;
+                    transition: transform .16s ease, box-shadow .16s ease;}
+.stButton > button:hover {transform: translateY(-1px); box-shadow: 0 5px 14px rgba(15,23,42,.12);}
+button:focus-visible, input:focus-visible, [tabindex]:focus-visible {
+    outline: 3px solid #0f766e !important; outline-offset: 2px !important;
+}
+@media (prefers-color-scheme: dark) {
+  .stat .v, .step b {color: #5eead4;}
+  .card-mark {background: #5eead4;}
+}
+@media (max-width: 700px) {
+  .block-container {padding-top: 1.25rem; padding-left: 1rem; padding-right: 1rem;}
+  .hero {padding: 1.8rem 1.35rem; border-radius: 16px;}
+  .hero-sub {font-size: 1rem;}
+  .card {min-height: 0;}
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {scroll-behavior: auto !important; transition-duration: .01ms !important;}
+}
 </style>
 """, unsafe_allow_html=True)
 
-NAV = ["🏠 Home", "🔬 Predict", "📊 Results", "🧠 Methodology", "📚 Datasets"]
+NAV = ["Home", "Prediction", "Results", "Methodology", "Datasets"]
 DATASETS = {"Wisconsin Diagnostic": "wis", "Coimbra": "coi"}
 
 
@@ -73,8 +107,8 @@ def goto(page):
     st.session_state.page = page
 
 
-def card(icon, title, text):
-    return f'<div class="card"><div class="icon">{icon}</div><h4>{title}</h4><p>{text}</p></div>'
+def card(title, text):
+    return f'<div class="card"><div class="card-mark" aria-hidden="true"></div><h3>{title}</h3><p>{text}</p></div>'
 
 
 def stat(value, label):
@@ -190,8 +224,8 @@ if "page" not in st.session_state:
     st.session_state.page = NAV[0]
 
 with st.sidebar:
-    st.markdown("## 🩺 BreastDx SVM")
-    st.caption("Feature selection + Support Vector Machines for breast cancer diagnosis")
+    st.markdown("## Breast Cancer SVM")
+    st.caption("An educational machine-learning explorer")
     st.radio("Navigate", NAV, key="page", label_visibility="collapsed")
     st.divider()
     st.warning("Educational project only. Not a medical device and not for clinical use.")
@@ -202,10 +236,10 @@ page = st.session_state.page
 if page == NAV[0]:
     st.markdown("""
     <div class="hero">
-      <div class="badge">AI course project · Machine learning for healthcare</div>
-      <div class="hero-title">Breast cancer diagnosis with feature selection and SVMs</div>
-      <p class="hero-sub">Enter measurements, get an instant prediction, and explore how six
-      different SVM models compare on two real clinical datasets.</p>
+      <div class="eyebrow">Student research project · Machine learning</div>
+      <div class="hero-title">Explore breast cancer datasets with Support Vector Machines</div>
+      <p class="hero-sub">Review two separate classification experiments, compare feature-selection
+      methods, and explore the outputs of the selected models.</p>
     </div>""", unsafe_allow_html=True)
 
     b1, b2, _ = st.columns([1, 1, 4])
@@ -221,23 +255,23 @@ if page == NAV[0]:
 
     st.subheader("What you can do")
     f = st.columns(3)
-    f[0].markdown(card("🔬", "Instant predictions",
-                       "Enter values by hand or upload a CSV for batch predictions, with a clear score gauge."), unsafe_allow_html=True)
-    f[1].markdown(card("📊", "Transparent results",
-                       "Confusion matrix, ROC and precision-recall curves, and the full model comparison."), unsafe_allow_html=True)
-    f[2].markdown(card("🧠", "Feature selection",
-                       "No selection, SelectKBest and RFE are each tested with linear and RBF kernels."), unsafe_allow_html=True)
+    f[0].markdown(card("Model predictions",
+                       "Enter measurements manually or upload a CSV to explore model outputs."), unsafe_allow_html=True)
+    f[1].markdown(card("Evaluation results",
+                       "Review confusion matrices, ROC and precision-recall curves, and model comparisons."), unsafe_allow_html=True)
+    f[2].markdown(card("Feature selection",
+                       "Compare no selection, SelectKBest, and RFE with linear and RBF kernels."), unsafe_allow_html=True)
     st.write("")
     f = st.columns(3)
-    f[0].markdown(card("🧪", "Two datasets",
-                       "Wisconsin Diagnostic (cell-nucleus images) and Coimbra (routine blood markers)."), unsafe_allow_html=True)
-    f[1].markdown(card("🛡️", "No data leakage",
-                       "Scaling and feature selection live inside the training pipeline and are tuned with cross-validation."), unsafe_allow_html=True)
-    f[2].markdown(card("📥", "Downloadable reports",
-                       "Save any single prediction as a report, or download batch predictions as CSV."), unsafe_allow_html=True)
+    f[0].markdown(card("Two independent datasets",
+                       "Wisconsin uses cell-nucleus measurements; Coimbra uses routine blood and body markers."), unsafe_allow_html=True)
+    f[1].markdown(card("Leakage-aware workflow",
+                       "Scaling and feature selection are fitted within the training pipeline during cross-validation."), unsafe_allow_html=True)
+    f[2].markdown(card("Exportable outputs",
+                       "Download an individual prediction summary or a CSV of batch predictions."), unsafe_allow_html=True)
 
 elif page == NAV[1]:
-    st.title("🔬 Predict")
+    st.title("Prediction")
     choice = st.radio("Dataset", list(DATASETS), horizontal=True)
     key = DATASETS[choice]
     b = BUNDLES[key]
@@ -294,15 +328,15 @@ elif page == NAV[1]:
                                    "predictions.csv", "text/csv")
 
 elif page == NAV[2]:
-    st.title("📊 Results")
+    st.title("Results")
     choice = st.radio("Dataset", list(DATASETS), horizontal=True)
     if DATASETS[choice] == "coi":
         st.info("Only 24 test cases, so these numbers are noisy. Missing patients (false negatives) is the main weakness.")
     results_view(BUNDLES[DATASETS[choice]])
 
 elif page == NAV[3]:
-    st.title("🧠 Methodology")
-    st.write("Both datasets go through the same experiment, so the results are directly comparable.")
+    st.title("Methodology")
+    st.write("The experiments use a similar workflow, but the datasets predict different outcomes. Their metrics should be interpreted separately.")
     steps = [
         ("1. Split", "80% training, 20% held-out test, stratified so both sets keep the class balance (random state 42)."),
         ("2. Scale", "StandardScaler, fitted on training data only."),
@@ -316,20 +350,20 @@ elif page == NAV[3]:
         st.markdown(f'<div class="step"><b>{t}</b> &nbsp; {d}</div>', unsafe_allow_html=True)
 
     c1, c2 = st.columns(2)
-    c1.markdown(card("🎯", "Why recall matters",
+    c1.markdown(card("Why recall matters",
                      "A false negative is a cancer case predicted as benign, which could delay further assessment. "
                      "That is why Wisconsin model selection optimises malignant recall."), unsafe_allow_html=True)
-    c2.markdown(card("⚠️", "Limitations",
+    c2.markdown(card("Limitations",
                      "Small datasets, a single train/test split, and no external validation. "
                      "The Coimbra model in particular should not be relied on."), unsafe_allow_html=True)
 
 elif page == NAV[4]:
-    st.title("📚 Datasets")
+    st.title("Datasets")
     c1, c2 = st.columns(2)
-    c1.markdown(card("🔬", "Breast Cancer Wisconsin (Diagnostic)",
+    c1.markdown(card("Breast Cancer Wisconsin (Diagnostic)",
                      "569 observations, 30 numeric features computed from digitised images of fine-needle aspirates. "
                      "Target: benign or malignant. UCI repository, dataset ID 17."), unsafe_allow_html=True)
-    c2.markdown(card("🩸", "Breast Cancer Coimbra",
+    c2.markdown(card("Breast Cancer Coimbra",
                      "116 observations, 9 routine blood and body measurements. "
                      "Target: healthy control or breast cancer patient. UCI repository, dataset ID 451."), unsafe_allow_html=True)
     st.write("")
@@ -341,4 +375,4 @@ elif page == NAV[4]:
         st.write("Age, BMI, glucose, insulin, HOMA, leptin, adiponectin, resistin and MCP-1.")
     st.caption("The two experiments are run separately. Metrics are never combined across datasets.")
 
-st.markdown('<div class="footer">BreastDx SVM · educational project, not for clinical use</div>', unsafe_allow_html=True)
+st.markdown('<div class="footer">Educational research demonstration · Not a medical device and not for clinical use</div>', unsafe_allow_html=True)
