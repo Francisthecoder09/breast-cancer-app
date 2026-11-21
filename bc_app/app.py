@@ -18,6 +18,31 @@ st.markdown("""
 .block-container {padding-top: 2rem; padding-bottom: 3rem; max-width: 1220px;}
 [data-testid="stSidebar"] {border-right: 1px solid rgba(128,128,128,.22);}
 [data-testid="stSidebar"] h2 {letter-spacing: -.03em;}
+.sidebar-brand {display: flex; align-items: center; gap: .8rem; margin: .45rem 0 .25rem;}
+.brand-mark {display: grid; place-items: center; width: 42px; height: 42px; flex: 0 0 42px;
+             border-radius: 12px; background: #0f766e; color: #fff; font-size: .86rem;
+             font-weight: 800; letter-spacing: .02em;}
+.brand-name {font-size: 1.04rem; font-weight: 750; line-height: 1.2;}
+.brand-product {font-size: .84rem; line-height: 1.35; opacity: .72; margin-top: .15rem;}
+.sidebar-caption {font-size: .88rem; line-height: 1.45; opacity: .76; margin: .65rem 0 1.35rem;}
+.sidebar-section-label {font-size: .72rem; font-weight: 700; letter-spacing: .12em;
+                        text-transform: uppercase; opacity: .62; margin: 0 0 .55rem .15rem;}
+.sidebar-note {background: var(--secondary-background-color); color: var(--text-color);
+               border: 1px solid rgba(128,128,128,.24); border-left: 3px solid #0f766e;
+               border-radius: 10px; padding: .8rem .85rem; margin-top: 1rem;}
+.sidebar-note-title {font-size: .88rem; font-weight: 700; margin-bottom: .3rem;}
+.sidebar-note p {font-size: .82rem; line-height: 1.45; opacity: .78; margin: 0;}
+[data-testid="stSidebar"] .stButton > button {justify-content: flex-start; text-align: left;
+    border-radius: 9px; min-height: 2.55rem; padding: .55rem .75rem; font-size: .94rem;
+    transition: background-color .16s ease, border-color .16s ease, box-shadow .16s ease;}
+[data-testid="stSidebar"] .stButton > button[kind="secondary"] {
+    background: transparent; border-color: transparent; color: var(--text-color);}
+[data-testid="stSidebar"] .stButton > button[kind="secondary"]:hover {
+    background: rgba(15,118,110,.09); border-color: rgba(15,118,110,.18);}
+[data-testid="stSidebar"] .stButton > button[kind="primary"] {
+    background: #0f766e; border-color: #0f766e; color: #fff;}
+[data-testid="stSidebar"] .stButton > button[kind="primary"]:hover {
+    background: #115e59; border-color: #115e59;}
 h1, h2, h3 {letter-spacing: -.025em;}
 .hero {background: linear-gradient(120deg,#12313b 0%,#145b66 100%); border-radius: 20px;
        padding: 2.7rem 2.6rem; color: #fff; margin-bottom: 1.35rem;
@@ -224,11 +249,29 @@ if "page" not in st.session_state:
     st.session_state.page = NAV[0]
 
 with st.sidebar:
-    st.markdown("## Breast Cancer SVM")
-    st.caption("An educational machine-learning explorer")
-    st.radio("Navigate", NAV, key="page", label_visibility="collapsed")
-    st.divider()
-    st.warning("Educational project only. Not a medical device and not for clinical use.")
+    st.markdown("""
+    <div class="sidebar-brand">
+      <div class="brand-mark" aria-hidden="true">BC</div>
+      <div><div class="brand-name">Breast Cancer</div><div class="brand-product">SVM Explorer</div></div>
+    </div>
+    <p class="sidebar-caption">A student project exploring machine-learning methods across two datasets.</p>
+    <div class="sidebar-section-label">Workspace</div>
+    """, unsafe_allow_html=True)
+    for destination in NAV:
+        st.button(
+            destination,
+            key=f"nav_{destination.lower()}",
+            type="primary" if st.session_state.page == destination else "secondary",
+            width="stretch",
+            on_click=goto,
+            args=(destination,),
+        )
+    st.markdown("""
+    <div class="sidebar-note">
+      <div class="sidebar-note-title">Educational use only</div>
+      <p>Model outputs are experimental and are not medical advice or for clinical decisions.</p>
+    </div>
+    """, unsafe_allow_html=True)
 
 page = st.session_state.page
 
